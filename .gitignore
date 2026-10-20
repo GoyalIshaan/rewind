@@ -1,0 +1,20 @@
+# Local concepts / ideas tracking note: never publish.
+/rewind_mvp/DESIGN_NOTES.md
+
+# Python environments and generated caches.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Machine-local files and credentials.
+.DS_Store
+.env
+.env.*
+!.env.example

@@ -1,0 +1,90 @@
+PyTorch 2.10.0; T=3, D=4, K=3, context=2, vocab=7
+ATen graph; fixed-length Python loop is unrolled; no MLIR conversion yet.
+
+
+
+def forward(self, b_embedding, b_decay, b_recurrent_key, b_recurrent_value, b_recurrent_query, b_attention_key, b_attention_value, b_attention_query, b_head, proposed_tokens, initial_state, context_keys, context_values, initial_logits):
+    index = torch.ops.aten.index.Tensor(b_embedding, [proposed_tokens]);  b_embedding = None
+    matmul = torch.ops.aten.matmul.default(index, b_decay);  b_decay = None
+    sigmoid = torch.ops.aten.sigmoid.default(matmul);  matmul = None
+    matmul_1 = torch.ops.aten.matmul.default(index, b_recurrent_key);  b_recurrent_key = None
+    matmul_2 = torch.ops.aten.matmul.default(index, b_recurrent_value);  b_recurrent_value = None
+    matmul_3 = torch.ops.aten.matmul.default(index, b_recurrent_query);  b_recurrent_query = None
+    matmul_4 = torch.ops.aten.matmul.default(index, b_attention_query);  b_attention_query = None
+    matmul_5 = torch.ops.aten.matmul.default(index, b_attention_key);  b_attention_key = None
+    cat = torch.ops.aten.cat.default([context_keys, matmul_5]);  context_keys = matmul_5 = None
+    matmul_6 = torch.ops.aten.matmul.default(index, b_attention_value);  b_attention_value = None
+    cat_1 = torch.ops.aten.cat.default([context_values, matmul_6]);  context_values = matmul_6 = None
+    clone = torch.ops.aten.clone.default(initial_state);  initial_state = None
+    select = torch.ops.aten.select.int(sigmoid, 0, 0)
+    mul = torch.ops.aten.mul.Tensor(select, clone);  select = None
+    select_1 = torch.ops.aten.select.int(matmul_2, 0, 0)
+    select_2 = torch.ops.aten.select.int(matmul_1, 0, 0)
+    outer = torch.ops.aten.outer.default(select_1, select_2);  select_1 = select_2 = None
+    add = torch.ops.aten.add.Tensor(mul, outer);  mul = outer = None
+    select_3 = torch.ops.aten.select.int(matmul_3, 0, 0)
+    matmul_7 = torch.ops.aten.matmul.default(add, select_3);  select_3 = None
+    select_4 = torch.ops.aten.select.int(matmul_4, 0, 0)
+    slice_1 = torch.ops.aten.slice.Tensor(cat, 0, 0, 3)
+    slice_2 = torch.ops.aten.slice.Tensor(cat_1, 0, 0, 3)
+    matmul_8 = torch.ops.aten.matmul.default(slice_1, select_4);  slice_1 = select_4 = None
+    div = torch.ops.aten.div.Tensor(matmul_8, 1.7320508075688772);  matmul_8 = None
+    softmax = torch.ops.aten.softmax.int(div, 0);  div = None
+    matmul_9 = torch.ops.aten.matmul.default(softmax, slice_2);  softmax = slice_2 = None
+    select_5 = torch.ops.aten.select.int(index, 0, 0)
+    add_1 = torch.ops.aten.add.Tensor(select_5, matmul_7);  select_5 = matmul_7 = None
+    add_2 = torch.ops.aten.add.Tensor(add_1, matmul_9);  add_1 = matmul_9 = None
+    matmul_10 = torch.ops.aten.matmul.default(add_2, b_head);  add_2 = None
+    select_6 = torch.ops.aten.select.int(sigmoid, 0, 1)
+    mul_1 = torch.ops.aten.mul.Tensor(select_6, add);  select_6 = None
+    select_7 = torch.ops.aten.select.int(matmul_2, 0, 1)
+    select_8 = torch.ops.aten.select.int(matmul_1, 0, 1)
+    outer_1 = torch.ops.aten.outer.default(select_7, select_8);  select_7 = select_8 = None
+    add_3 = torch.ops.aten.add.Tensor(mul_1, outer_1);  mul_1 = outer_1 = None
+    select_9 = torch.ops.aten.select.int(matmul_3, 0, 1)
+    matmul_11 = torch.ops.aten.matmul.default(add_3, select_9);  select_9 = None
+    select_10 = torch.ops.aten.select.int(matmul_4, 0, 1)
+    slice_3 = torch.ops.aten.slice.Tensor(cat, 0, 0, 4)
+    slice_4 = torch.ops.aten.slice.Tensor(cat_1, 0, 0, 4)
+    matmul_12 = torch.ops.aten.matmul.default(slice_3, select_10);  slice_3 = select_10 = None
+    div_1 = torch.ops.aten.div.Tensor(matmul_12, 1.7320508075688772);  matmul_12 = None
+    softmax_1 = torch.ops.aten.softmax.int(div_1, 0);  div_1 = None
+    matmul_13 = torch.ops.aten.matmul.default(softmax_1, slice_4);  softmax_1 = slice_4 = None
+    select_11 = torch.ops.aten.select.int(index, 0, 1)
+    add_4 = torch.ops.aten.add.Tensor(select_11, matmul_11);  select_11 = matmul_11 = None
+    add_5 = torch.ops.aten.add.Tensor(add_4, matmul_13);  add_4 = matmul_13 = None
+    matmul_14 = torch.ops.aten.matmul.default(add_5, b_head);  add_5 = None
+    select_12 = torch.ops.aten.select.int(sigmoid, 0, 2);  sigmoid = None
+    mul_2 = torch.ops.aten.mul.Tensor(select_12, add_3);  select_12 = None
+    select_13 = torch.ops.aten.select.int(matmul_2, 0, 2);  matmul_2 = None
+    select_14 = torch.ops.aten.select.int(matmul_1, 0, 2);  matmul_1 = None
+    outer_2 = torch.ops.aten.outer.default(select_13, select_14);  select_13 = select_14 = None
+    add_6 = torch.ops.aten.add.Tensor(mul_2, outer_2);  mul_2 = outer_2 = None
+    select_15 = torch.ops.aten.select.int(matmul_3, 0, 2);  matmul_3 = None
+    matmul_15 = torch.ops.aten.matmul.default(add_6, select_15);  select_15 = None
+    select_16 = torch.ops.aten.select.int(matmul_4, 0, 2);  matmul_4 = None
+    slice_5 = torch.ops.aten.slice.Tensor(cat, 0, 0, 5)
+    slice_6 = torch.ops.aten.slice.Tensor(cat_1, 0, 0, 5)
+    matmul_16 = torch.ops.aten.matmul.default(slice_5, select_16);  slice_5 = select_16 = None
+    div_2 = torch.ops.aten.div.Tensor(matmul_16, 1.7320508075688772);  matmul_16 = None
+    softmax_2 = torch.ops.aten.softmax.int(div_2, 0);  div_2 = None
+    matmul_17 = torch.ops.aten.matmul.default(softmax_2, slice_6);  softmax_2 = slice_6 = None
+    select_17 = torch.ops.aten.select.int(index, 0, 2);  index = None
+    add_7 = torch.ops.aten.add.Tensor(select_17, matmul_15);  select_17 = matmul_15 = None
+    add_8 = torch.ops.aten.add.Tensor(add_7, matmul_17);  add_7 = matmul_17 = None
+    matmul_18 = torch.ops.aten.matmul.default(add_8, b_head);  add_8 = b_head = None
+    stack = torch.ops.aten.stack.default([matmul_10, matmul_14, matmul_18]);  matmul_10 = matmul_14 = matmul_18 = None
+    unsqueeze = torch.ops.aten.unsqueeze.default(initial_logits, 0);  initial_logits = None
+    slice_7 = torch.ops.aten.slice.Tensor(stack, 0, 0, -1)
+    cat_2 = torch.ops.aten.cat.default([unsqueeze, slice_7]);  unsqueeze = slice_7 = None
+    argmax = torch.ops.aten.argmax.default(cat_2, -1);  cat_2 = None
+    eq = torch.ops.aten.eq.Tensor(argmax, proposed_tokens);  argmax = proposed_tokens = None
+    _assert_tensor_metadata_default = torch.ops.aten._assert_tensor_metadata.default(eq, dtype = torch.bool, device = device(type='cpu'), layout = torch.strided);  _assert_tensor_metadata_default = None
+    to = torch.ops.aten.to.dtype(eq, torch.int64);  eq = None
+    cumprod = torch.ops.aten.cumprod.default(to, 0);  to = None
+    sum_1 = torch.ops.aten.sum.dim_IntList(cumprod, [0], True);  cumprod = None
+    stack_1 = torch.ops.aten.stack.default([clone, add, add_3, add_6]);  clone = add = add_3 = add_6 = None
+    index_select = torch.ops.aten.index_select.default(stack_1, 0, sum_1);  stack_1 = None
+    squeeze = torch.ops.aten.squeeze.dim(index_select, 0);  index_select = None
+    add_9 = torch.ops.aten.add.Tensor(sum_1, 2)
+    return (stack, squeeze, cat, cat_1, add_9, sum_1)
