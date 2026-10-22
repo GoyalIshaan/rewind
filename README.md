@@ -14,8 +14,11 @@ selection. Read-only analyses recognize:
 3. Ordered state-history stacks and their `index_select` / `squeeze` retrieval.
 
 Matches include graph-node references and are printed for debugging. Recognition
-does not yet prove replay legality or perform a history rewrite. There is no MLIR
-dialect, generated optimized GPU kernel, or measured speedup yet.
+does not yet prove replay legality or perform a history rewrite. A first
+[MLIR dialect skeleton](mlir/README.md) defines a history store and initialization,
+append, and retrieval operations, with a parser/printer and type verifiers.
+It is not connected to the PyTorch analyses yet. There is no generated optimized
+GPU kernel or measured speedup yet.
 
 The synthetic fixture is not a pretrained model or complete speculative serving
 engine. `reference.py` includes a hand-written replay reference for correctness
@@ -55,6 +58,7 @@ actual dependencies and node identity.
 | `rewind_mvp/chains.py` | State-edge connectivity analysis |
 | `rewind_mvp/history.py` | Stack-history and retrieval detection |
 | `rewind_mvp/test_*.py` | Positive, negative, and non-mutation checks |
+| `mlir/` | TableGen dialect skeleton, C++ verifiers, driver, and IR tests |
 | `output/` | Existing inference study worksheets and solutions |
 | `work/` | Existing traces from an earlier MoE-cache experiment |
 
