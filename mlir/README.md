@@ -28,30 +28,36 @@ cmake -S mlir -B build/mlir \
   -DMLIR_DIR=/opt/homebrew/opt/llvm/lib/cmake/mlir \
   -DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang \
   -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++ \
+  -DCMAKE_AR=/usr/bin/ar \
+  -DCMAKE_RANLIB=/usr/bin/ranlib \
   -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
   -DCMAKE_BUILD_TYPE=Release
 ```
 
 The explicit Xcode SDK avoids the local default Apple compiler/Command Line
-Tools SDK mismatch. These paths are machine-specific, not project requirements.
+Tools SDK mismatch. The Apple archive tools avoid picking up GNU binutils from
+PATH when creating Mach-O libraries. These paths are machine-specific, not
+project requirements.
 
 ## Read the code in this order
 
-1. `include/Rewind/IR/RewindDialect.td`: declares the `rewind` namespace.
-2. `include/Rewind/IR/RewindTypes.td`: declares the store handle type and its
+The handwritten dialect files live together in `Rewind/`.
+
+1. `Rewind/RewindDialect.td`: declares the `rewind` namespace.
+2. `Rewind/RewindTypes.td`: declares the store handle type and its
    matrix-type parameter.
-3. `include/Rewind/IR/RewindOps.td`: declares operation inputs, outputs, assembly
+3. `Rewind/RewindOps.td`: declares operation inputs, outputs, assembly
    syntax, semantic contracts, and effects.
-4. `lib/RewindDialect.cpp`: registers generated classes and supplies verifiers
+4. `Rewind/RewindDialect.cpp`: registers generated classes and supplies verifiers
    for relationships between types and shapes.
 5. `tools/rewind-opt.cpp`: registers the dialect with a small MLIR driver.
 6. `test/history.mlir`: a handwritten program using the operations.
 
 The build runs `mlir-tblgen` on `.td` files to generate C++ `.inc` files under
-`build/mlir/include/`. The handwritten header and implementation include these
-generated declarations and definitions. Generated files are not committed.
-This follows MLIR's [dialect structure](https://mlir.llvm.org/docs/Tutorials/CreatingADialect/),
-[operation definitions](https://mlir.llvm.org/docs/DefiningDialects/Operations/),
+`build/mlir/include/Rewind/`. The handwritten header and implementation include
+these generated declarations and definitions. Generated files are not committed.
+The definitions use MLIR's
+[operation definitions](https://mlir.llvm.org/docs/DefiningDialects/Operations/)
 and [type definitions](https://mlir.llvm.org/docs/DefiningDialects/AttributesAndTypes/).
 
 ## V0 contract

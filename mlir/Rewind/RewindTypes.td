@@ -1,7 +1,7 @@
 #ifndef REWIND_IR_TYPES_TD
 #define REWIND_IR_TYPES_TD
 
-include "Rewind/IR/RewindDialect.td"
+include "Rewind/RewindDialect.td"
 include "mlir/IR/AttrTypeBase.td"
 
 def Rewind_StoreType : TypeDef<Rewind_Dialect, "Store"> {

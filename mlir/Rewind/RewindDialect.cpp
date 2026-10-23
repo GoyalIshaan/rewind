@@ -1,16 +1,16 @@
-#include "Rewind/IR/Rewind.h"
+#include "Rewind/Rewind.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "llvm/ADT/TypeSwitch.h"
 
 using namespace mlir;
 
-#include "Rewind/IR/RewindDialect.cpp.inc"
+#include "Rewind/RewindDialect.cpp.inc"
 
 #define GET_TYPEDEF_CLASSES
-#include "Rewind/IR/RewindTypes.cpp.inc"
+#include "Rewind/RewindTypes.cpp.inc"
 
 #define GET_OP_CLASSES
-#include "Rewind/IR/RewindOps.cpp.inc"
+#include "Rewind/RewindOps.cpp.inc"
 
 namespace mlir::rewind {
 
@@ -18,11 +18,11 @@ namespace mlir::rewind {
 void RewindDialect::initialize() {
   addTypes<
 #define GET_TYPEDEF_LIST
-#include "Rewind/IR/RewindTypes.cpp.inc"
+#include "Rewind/RewindTypes.cpp.inc"
       >();
   addOperations<
 #define GET_OP_LIST
-#include "Rewind/IR/RewindOps.cpp.inc"
+#include "Rewind/RewindOps.cpp.inc"
       >();
 }
 

@@ -1,4 +1,4 @@
-#include "Rewind/IR/Rewind.h"
+#include "Rewind/Rewind.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"

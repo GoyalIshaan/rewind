@@ -11,26 +11,26 @@ include(AddLLVM)
 include(AddMLIR)
 
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR}/include)
 add_definitions(${LLVM_DEFINITIONS})
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/Rewind/IR)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/Rewind)
 
 # TableGen generates declarations/definitions; generated files stay in build/.
-set(LLVM_TARGET_DEFINITIONS include/Rewind/IR/RewindDialect.td)
-mlir_tablegen(include/Rewind/IR/RewindDialect.h.inc -gen-dialect-decls -dialect=rewind)
-mlir_tablegen(include/Rewind/IR/RewindDialect.cpp.inc -gen-dialect-defs -dialect=rewind)
+set(LLVM_TARGET_DEFINITIONS Rewind/RewindDialect.td)
+mlir_tablegen(include/Rewind/RewindDialect.h.inc -gen-dialect-decls -dialect=rewind)
+mlir_tablegen(include/Rewind/RewindDialect.cpp.inc -gen-dialect-defs -dialect=rewind)
 
-set(LLVM_TARGET_DEFINITIONS include/Rewind/IR/RewindTypes.td)
-mlir_tablegen(include/Rewind/IR/RewindTypes.h.inc -gen-typedef-decls -typedefs-dialect=rewind)
-mlir_tablegen(include/Rewind/IR/RewindTypes.cpp.inc -gen-typedef-defs -typedefs-dialect=rewind)
+set(LLVM_TARGET_DEFINITIONS Rewind/RewindTypes.td)
+mlir_tablegen(include/Rewind/RewindTypes.h.inc -gen-typedef-decls -typedefs-dialect=rewind)
+mlir_tablegen(include/Rewind/RewindTypes.cpp.inc -gen-typedef-defs -typedefs-dialect=rewind)
 
-set(LLVM_TARGET_DEFINITIONS include/Rewind/IR/RewindOps.td)
-mlir_tablegen(include/Rewind/IR/RewindOps.h.inc -gen-op-decls)
-mlir_tablegen(include/Rewind/IR/RewindOps.cpp.inc -gen-op-defs)
+set(LLVM_TARGET_DEFINITIONS Rewind/RewindOps.td)
+mlir_tablegen(include/Rewind/RewindOps.h.inc -gen-op-decls)
+mlir_tablegen(include/Rewind/RewindOps.cpp.inc -gen-op-defs)
 add_public_tablegen_target(RewindIncGen)
 
-add_library(RewindIR lib/RewindDialect.cpp)
+add_library(RewindIR Rewind/RewindDialect.cpp)
 add_dependencies(RewindIR RewindIncGen)
 target_link_libraries(RewindIR PUBLIC MLIRIR MLIRSideEffectInterfaces)
 

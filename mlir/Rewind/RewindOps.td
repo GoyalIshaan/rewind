@@ -1,7 +1,7 @@
 #ifndef REWIND_IR_OPS_TD
 #define REWIND_IR_OPS_TD
 
-include "Rewind/IR/RewindTypes.td"
+include "Rewind/RewindTypes.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 class Rewind_Op<string mnemonic, list<Trait> traits = []>
