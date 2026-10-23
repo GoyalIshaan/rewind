@@ -13,6 +13,10 @@ venv/
 build/
 dist/
 
+# Editor compilation database (copied from build/mlir after configure).
+/mlir/compile_commands.json
+.cache/
+
 # Machine-local files and credentials.
 .DS_Store
 .env

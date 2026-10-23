@@ -16,6 +16,7 @@ From the repository root, substitute your installation's MLIR package path:
 cmake -S mlir -B build/mlir \
   -DMLIR_DIR=/path/to/llvm/lib/cmake/mlir \
   -DCMAKE_BUILD_TYPE=Release
+# CMake also writes build/mlir/compile_commands.json for clangd / the editor.
 cmake --build build/mlir -j 4
 ctest --test-dir build/mlir --output-on-failure
 build/mlir/rewind-opt mlir/test/history.mlir
@@ -38,6 +39,13 @@ The explicit Xcode SDK avoids the local default Apple compiler/Command Line
 Tools SDK mismatch. The Apple archive tools avoid picking up GNU binutils from
 PATH when creating Mach-O libraries. These paths are machine-specific, not
 project requirements.
+
+`CMAKE_EXPORT_COMPILE_COMMANDS` is a cache option, so CMake writes
+`build/mlir/compile_commands.json`. Configure also copies that file into
+`mlir/compile_commands.json` (gitignored) because Cursor's Microsoft C++
+extension only reads a database inside the workspace. `mlir/.clangd` and
+`mlir/.vscode/` point at that copy. After a configure, reload the window
+if includes still look unresolved.
 
 ## Read the code in this order
 

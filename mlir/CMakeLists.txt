@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
+# Must be a cache entry. A normal set() does not override an empty cache value,
+# so editors never receive compile_commands.json.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
+    "Export compile_commands.json for clangd / Microsoft C++ IntelliSense" FORCE)
 project(RewindMLIR LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -43,3 +47,11 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME rewind-dialect
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_dialect.py
           $<TARGET_FILE:rewind-opt>)
+
+# Microsoft C++ IntelliSense and clangd look inside the workspace. The
+# generated database lives out-of-tree, so copy it on every build.
+add_custom_target(RewindCompileCommands ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${CMAKE_BINARY_DIR}/compile_commands.json"
+          "${CMAKE_SOURCE_DIR}/compile_commands.json"
+  COMMENT "Copy compile_commands.json into mlir/ for the editor")

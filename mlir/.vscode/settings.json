@@ -1,0 +1,16 @@
+{
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json",
+  "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/../build/mlir/include",
+    "/opt/homebrew/opt/llvm/include"
+  ],
+  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.errorSquiggles": "enabled",
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.buildDirectory": "${workspaceFolder}/../build/mlir"
+}

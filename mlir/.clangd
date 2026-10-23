@@ -1,0 +1,23 @@
+# clangd needs the same include paths, defines, and compiler as CMake.
+# The compilation database is generated under the out-of-tree build directory
+# and copied into this source tree so the editor workspace can read it.
+CompileFlags:
+  CompilationDatabase: .
+  Compiler: /opt/homebrew/opt/llvm/bin/clang++
+  Add:
+    - --target=arm64-apple-macosx
+    - -std=c++17
+    - -I.
+    - -I../build/mlir/include
+    - -isystem
+    - /opt/homebrew/opt/llvm/include
+    - -D__STDC_CONSTANT_MACROS
+    - -D__STDC_FORMAT_MACROS
+    - -D__STDC_LIMIT_MACROS
+If:
+  PathMatch: .*\.(cpp|h|inc)$
+---
+If:
+  PathMatch: .*\.td$
+Diagnostics:
+  Suppress: "*"
