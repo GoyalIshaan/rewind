@@ -41,10 +41,10 @@ PATH when creating Mach-O libraries. These paths are machine-specific, not
 project requirements.
 
 `CMAKE_EXPORT_COMPILE_COMMANDS` is a cache option, so CMake writes
-`build/mlir/compile_commands.json`. Configure also copies that file into
+`build/mlir/compile_commands.json`. The build also copies that file into
 `mlir/compile_commands.json` (gitignored) because Cursor's Microsoft C++
 extension only reads a database inside the workspace. `mlir/.clangd` and
-`mlir/.vscode/` point at that copy. After a configure, reload the window
+`mlir/.vscode/` point at that copy. After a build, reload the window
 if includes still look unresolved.
 
 ## Read the code in this order
@@ -64,6 +64,10 @@ The handwritten dialect files live together in `Rewind/`.
 The build runs `mlir-tblgen` on `.td` files to generate C++ `.inc` files under
 `build/mlir/include/Rewind/`. The handwritten header and implementation include
 these generated declarations and definitions. Generated files are not committed.
+`RewindIR` exports include paths for both `Rewind/` and the generated
+`include/Rewind/` directory, so grouped sources can use short includes such as
+`Rewind.h` and `RewindTypes.h.inc`. `Rewind.h` collects the external MLIR/LLVM
+headers through `Rewind/System.h`.
 The definitions use MLIR's
 [operation definitions](https://mlir.llvm.org/docs/DefiningDialects/Operations/)
 and [type definitions](https://mlir.llvm.org/docs/DefiningDialects/AttributesAndTypes/).

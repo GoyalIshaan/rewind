@@ -35,6 +35,11 @@ mlir_tablegen(include/Rewind/RewindOps.cpp.inc -gen-op-defs)
 add_public_tablegen_target(RewindIncGen)
 
 add_library(RewindIR Rewind/RewindDialect.cpp)
+# Support short includes in the grouped sources and generated declarations.
+# PUBLIC also exposes these paths to tools that include Rewind/Rewind.h.
+target_include_directories(RewindIR PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/Rewind
+  ${CMAKE_CURRENT_BINARY_DIR}/include/Rewind)
 add_dependencies(RewindIR RewindIncGen)
 target_link_libraries(RewindIR PUBLIC MLIRIR MLIRSideEffectInterfaces)
 
