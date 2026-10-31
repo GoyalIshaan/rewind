@@ -43,15 +43,37 @@ target_include_directories(RewindIR PUBLIC
 add_dependencies(RewindIR RewindIncGen)
 target_link_libraries(RewindIR PUBLIC MLIRIR MLIRSideEffectInterfaces)
 
+add_library(RewindTransforms Rewind/LowerHistory.cpp)
+target_link_libraries(RewindTransforms PUBLIC RewindIR MLIRPass MLIRTransformUtils
+  MLIRArithDialect MLIRControlFlowDialect MLIRFuncDialect MLIRSCFDialect
+  MLIRTensorDialect)
+
 add_executable(rewind-opt tools/rewind-opt.cpp)
-target_link_libraries(rewind-opt PRIVATE RewindIR MLIROptLib
-  MLIRArithDialect MLIRFuncDialect MLIRTransforms)
+target_link_libraries(rewind-opt PRIVATE RewindTransforms MLIROptLib
+  MLIRTransforms)
 
 enable_testing()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME rewind-dialect
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_dialect.py
           $<TARGET_FILE:rewind-opt>)
+
+find_program(REWIND_MLIR_OPT NAMES mlir-opt HINTS ${LLVM_TOOLS_BINARY_DIR})
+find_program(REWIND_MLIR_RUNNER NAMES mlir-runner mlir-cpu-runner
+             HINTS ${LLVM_TOOLS_BINARY_DIR})
+find_library(REWIND_C_RUNNER_UTILS NAMES mlir_c_runner_utils
+             HINTS ${LLVM_LIBRARY_DIRS})
+if(REWIND_MLIR_OPT AND REWIND_MLIR_RUNNER AND REWIND_C_RUNNER_UTILS)
+  add_test(NAME rewind-lowering
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_lowering.py
+            $<TARGET_FILE:rewind-opt> ${REWIND_MLIR_OPT} ${REWIND_MLIR_RUNNER}
+            ${REWIND_C_RUNNER_UTILS})
+else()
+  message(STATUS "MLIR execution tools/runtime not found; execution tests will skip")
+  add_test(NAME rewind-lowering
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_lowering.py
+            $<TARGET_FILE:rewind-opt>)
+endif()
 
 # Microsoft C++ IntelliSense and clangd look inside the workspace. The
 # generated database lives out-of-tree, so copy it on every build.

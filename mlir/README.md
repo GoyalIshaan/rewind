@@ -1,8 +1,11 @@
-# Rewind MLIR skeleton
+# Rewind MLIR dialect and history lowering
 
-This is a compiled dialect definition, with parsing, printing, type checking,
-and conservative effects. It does not execute replay, import the PyTorch graph,
-rewrite history storage, lower to CUDA, or establish a speedup yet.
+The dialect supports parsing, printing, type checking, and conservative effects.
+`--rewind-lower-history` lowers local straight-line history operations to checked
+replay using the standard `tensor`, `arith`, `scf`, and `cf` dialects. The tests
+run the result on the CPU through the installed MLIR tools. PyTorch graph import,
+automatic snapshot-history rewriting, CUDA lowering, and performance measurement
+remain separate unfinished steps.
 
 ## Build and check
 
@@ -20,6 +23,7 @@ cmake -S mlir -B build/mlir \
 cmake --build build/mlir -j 4
 ctest --test-dir build/mlir --output-on-failure
 build/mlir/rewind-opt mlir/test/history.mlir
+build/mlir/rewind-opt mlir/test/history.mlir --rewind-lower-history --verify-each
 ```
 
 On this Apple Silicon workstation the successful configuration uses:
@@ -60,6 +64,8 @@ The handwritten dialect files live together in `Rewind/`.
    for relationships between types and shapes.
 5. `tools/rewind-opt.cpp`: registers the dialect with a small MLIR driver.
 6. `test/history.mlir`: a handwritten program using the operations.
+7. `Rewind/LowerHistory.cpp`: supported-input checks, three lowering helpers,
+   replay arithmetic, and the ordered pass driver.
 
 The build runs `mlir-tblgen` on `.td` files to generate C++ `.inc` files under
 `build/mlir/include/Rewind/`. The handwritten header and implementation include
@@ -107,10 +113,114 @@ references. Later appends preserve all earlier entries. Appending does not
 compute a state matrix: the original forward recurrence and its output users
 remain separate from this history log.
 
-An out-of-range index must cause a runtime failure. The current tool only
-parses and verifies IR: even a constant invalid index can pass type verification.
-There is no runtime bounds check implementation yet; future executable lowering
-must implement it rather than assuming valid bounds or silently clamping.
+An out-of-range index causes a runtime failure after lowering. Type verification
+alone still accepts a constant invalid index: the lowering inserts signed lower
+and upper bounds checks and a `cf.assert` at each original retrieval position.
+It does not assume valid bounds or silently clamp an index. Even an unused
+retrieval must preserve this failure.
+
+## Lowering scope and function walkthrough
+
+The first pass supports stores initialized directly in a single-block function
+body. Every handle use must be an append or retrieval in that same block.
+It supports any statically represented number of appends, runtime indices,
+multiple retrievals, and independent stores, including stores sharing an initial
+tensor. Branch-spanning histories, nested history operations, and handles passed
+to or returned from functions are rejected. Rejection happens before any IR is
+changed anywhere in the module.
+
+This is the supported-input contract for lowering. A future original-graph-to-
+Rewind transformation must separately prove its semantic legality and retain the
+original computation when that proof fails. The lowering does not recover a
+PyTorch graph after unsupported Rewind operations have been introduced.
+
+`HistoryMap` maps each handle to a `HistoryInfo`: an initial SSA value and a
+`SmallVector` of `(scale, value, key)` SSA references. This is compiler memory,
+not a runtime tensor container. Tensor values must still remain available at
+runtime; ordinary tensor bufferization manages their physical storage.
+
+The call flow in `Rewind/LowerHistory.cpp` is:
+
+1. `validateInput(module)` checks that all histories fit the supported scope.
+2. `runOnOperation()` walks each function's operations in program order.
+3. `lowerInitializeStore(op, histories)` records the initial value and an empty
+   update sequence for the handle. It emits no numerical computation.
+4. `lowerAppend(op, histories)` appends operand references to that handle's
+   sequence. It does not calculate the next state or remove earlier entries.
+5. `lowerRetrieve(op, history, rewriter)` checks bounds against the updates
+   encountered so far, emits replay, and replaces uses of the retrieved matrix.
+6. `emitReplayStep(builder, loc, previous, update)` emits one `tensor.generate`.
+   Its body extracts the required elements and emits two `arith.mulf` operations
+   followed by `arith.addf`, without fast-math flags.
+7. The pass erases the original appends and initializations in reverse order,
+   after their handle users have been removed.
+
+The ordered walk performs the bookkeeping we discussed for `collectHistory`
+without rescanning the block for every retrieval. It also reads later operands
+after any earlier retrieval-result replacements, so a retrieved matrix can
+safely initialize another store. Future appends cannot affect earlier bounds.
+
+For two recorded updates, retrieval generates computation equivalent to:
+
+```text
+assert 0 <= accepted <= 2
+state = S0
+if accepted > 0:
+    state = replay_step(state, update0)
+if accepted > 1:
+    state = replay_step(state, update1)
+return state
+```
+
+The C++ pass emits these branches during compilation. The comparisons, tensor
+elements, and replay arithmetic execute later. Only the selected prefix performs
+arithmetic. Each retrieval starts from its checkpoint; records are not consumed.
+The pass does not modify other forward computations or matrix consumers.
+
+This emits one conditional replay site per available update per retrieval.
+It is a simple first implementation, not a profitability decision. It does not
+unroll matrix dimensions into C++ statements: `tensor.generate` represents the
+element space. Downstream bufferization and loop lowering create the actual
+allocations and loops, with their own costs.
+
+## Run a complete CPU example
+
+`examples/replay.mlir` uses two updates on a rectangular matrix. Its `main`
+returns element `[0,0]` after both updates, which is `0.5`.
+
+After building, run from the repository root (the paths below match this Mac):
+
+```sh
+build/mlir/rewind-opt mlir/examples/replay.mlir \
+  --rewind-lower-history --verify-each -o build/mlir/replay.tensor.mlir
+/opt/homebrew/opt/llvm/bin/mlir-opt build/mlir/replay.tensor.mlir \
+  --one-shot-bufferize="bufferize-function-boundaries" \
+  --buffer-deallocation-pipeline \
+  --convert-bufferization-to-memref --convert-linalg-to-loops \
+  --convert-scf-to-cf --convert-cf-to-llvm --convert-arith-to-llvm \
+  --finalize-memref-to-llvm --convert-func-to-llvm \
+  --reconcile-unrealized-casts -o build/mlir/replay.llvm.mlir
+/opt/homebrew/opt/llvm/bin/mlir-runner build/mlir/replay.llvm.mlir \
+  -e main --entry-point-result=f32 \
+  --shared-libs=/opt/homebrew/opt/llvm/lib/libmlir_c_runner_utils.dylib
+```
+
+The runner prints `5.000000e-01`. The intermediate files are under the ignored
+build directory. The C runner utility library supplies the `memrefCopy` routine
+used by downstream bufferization; this is not a Rewind history runtime.
+
+`test/test_lowering.py` checks structure and unsupported-input diagnostics. When
+`mlir-opt`, `mlir-runner` (or `mlir-cpu-runner`), and `mlir_c_runner_utils` are
+available, CTest also runs the execution cases; otherwise those cases are marked
+skipped. Numerical execution is checked for `f32` and `f64`, including every
+boundary of zero-, one-, and three-update histories, repeated and interleaved
+retrievals, independent stores, negative/too-large indices, immutable checkpoint
+capture, and the ordering of bounds failure before a consumer. Every returned
+element is compared bitwise with a reference that rounds each operation
+separately; NaNs are checked by classification. Adversarial cancellation cases
+also run with canonicalization, CSE, and LLVM optimization to detect contraction.
+The lowering's structural tests also cover `f16` and `bf16`; those two types are
+not covered by the CPU numerical execution tests.
 
 ## Effects and unfinished work
 
@@ -125,12 +235,13 @@ analysis, and movement past appends that preserve the requested prefix are not
 implemented. Describing append-only semantics does not automatically teach
 generic MLIR passes that particular optimization.
 
-The store currently has no physical capacity, device, allocation strategy,
-destruction operation, ownership restrictions, or lowering. Lifetime management
-must be resolved before generating an executable implementation. The tests
-exercise parser/printer round trips, accepted and rejected type relationships,
-and preservation of effectful operations under canonicalization/CSE. They do
-not test numerical replay or bounds execution.
+The dialect still has no general runtime container, physical capacity, device
+policy, destruction operation, or ownership model for escaping handles. The
+current lowering eliminates local handles and delegates tensor allocation and
+deallocation to standard MLIR bufferization. General histories need additional
+representation and lifetime design. The dialect tests exercise parser/printer
+round trips, accepted/rejected types, and effect preservation; the lowering tests
+separately exercise generated computation and runtime bounds failures.
 
 GitHub Actions currently runs the Python analysis suite. The dialect build and
 CTest suite are separate local checks; LLVM installation in CI is a later step.
